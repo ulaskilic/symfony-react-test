@@ -2,20 +2,33 @@
 
 namespace App\Command;
 
+use App\Entity\Task;
+use App\Repository\TaskRepository;
+use App\Resource\Task\TaskResource;
 use App\Services\Task\DeveloperTaskServiceFactory;
 use App\Services\Task\Provider2Adapter;
 use App\Services\Task\TaskService;
 use App\Services\Task\TaskServiceInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class TaskCollectorCommand extends BaseCommand
 {
     protected static $defaultName = 'task:collect';
+
+    /**
+     * Symfony container
+     *
+     * @var ContainerInterface
+     */
+    private ContainerInterface $container;
 
     /**
      * Supported provider list
@@ -30,6 +43,12 @@ class TaskCollectorCommand extends BaseCommand
             'service' => Provider2Adapter::class
         ]
     ];
+
+    public function __construct(ContainerInterface $container)
+    {
+        parent::__construct();
+        $this->container = $container;
+    }
 
     /**
      * Configure command
@@ -66,11 +85,47 @@ class TaskCollectorCommand extends BaseCommand
              * @var $provider TaskServiceInterface
              */
             $provider = new $class($uri);
-            $output->write(print_r($provider, true));
 
-            $output->write(print_r($provider->getTasks(), true));
+            foreach ($provider->getTasks() as $taskResource) {
+                $this->saveEntity($taskResource);
+            }
         }
 
         return 0;
+    }
+
+    /**
+     * Cleanup tasks
+     * TODO: overwrite tasks instead of cleaning up all
+     *
+     * @param $provider
+     */
+    private function cleanUp($provider)
+    {
+        /**
+         * @var $repository TaskRepository
+         */
+        $repository = $this->container->get('doctrine')->getRepository(Task::class);
+
+        $repository->deleteTasksByProvider($provider);
+    }
+
+    /**
+     * @param TaskResource $task
+     */
+    private function saveEntity(TaskResource $task)
+    {
+        /**
+         * @var $entityManager EntityManagerInterface
+         */
+        $entityManager = $this->container->get('doctrine')->getManager();
+
+        $taskEntity = new Task();
+        $taskEntity->setIdentifier($task->id);
+        $taskEntity->setComplexity($task->complexity);
+        $taskEntity->setEstimation($task->estimation);
+        $taskEntity->setProvider($task->provider);
+        $entityManager->persist($taskEntity);
+        $entityManager->flush();
     }
 }
