@@ -21,17 +21,16 @@ class TaskRepository extends ServiceEntityRepository
 
     public function deleteTasksByProvider($provider)
     {
-        $q = $this->getEntityManager()
-            ->createQuery("DELETE FROM App\Entity\Task t WHERE t.provider = ? ")
-            ->setParameters([$provider]);
-        $q->execute();
+        $this->createQueryBuilder('t')
+            ->where('t.provider = :provider')
+            ->setParameters(['provider' => $provider])
+            ->delete();
     }
 
     public function deleteTasks()
     {
-        $q = $this->getEntityManager()
-            ->createQuery("DELETE FROM App\Entity\Task t");
-        $q->execute();
+        $this->createQueryBuilder('t')
+            ->delete();
     }
 
     // /**

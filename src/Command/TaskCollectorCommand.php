@@ -120,7 +120,18 @@ class TaskCollectorCommand extends BaseCommand
          */
         $entityManager = $this->container->get('doctrine')->getManager();
 
+        /**
+         * @var $repository TaskRepository
+         */
+        $repository = $entityManager->getRepository(Task::class);
+
         $taskEntity = new Task();
+
+        $existsTask = $repository->findOneBy(['identifier' => $task->id, 'provider' => $task->provider]);
+        if($existsTask) {
+            $taskEntity = $existsTask;
+        }
+
         $taskEntity->setIdentifier($task->id);
         $taskEntity->setComplexity($task->complexity);
         $taskEntity->setEstimation($task->estimation);
