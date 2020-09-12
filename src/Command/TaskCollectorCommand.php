@@ -59,7 +59,7 @@ class TaskCollectorCommand extends BaseCommand
             ->setDescription('Collect jobs from providers')
             ->addOption('provider', null, InputOption::VALUE_OPTIONAL, 'Select provider: mock1, mock2')
             ->addOption('uri', null, InputOption::VALUE_OPTIONAL, 'Provider URL')
-            ->addOption('all', null, InputOption::VALUE_OPTIONAL, 'Collect from all providers (It will proceed with default URLs)');
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Collect from all providers (It will proceed with default URLs)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -71,6 +71,7 @@ class TaskCollectorCommand extends BaseCommand
 
         $selectedProvider = $input->getOption('provider');
         if(!empty($selectedProvider)) {
+            $this->info('Data collecting from provider ' . $selectedProvider);
             if(!in_array($selectedProvider, array_keys(self::SUPPORTED_PROVIDERS))) {
                 $this->error('Provider is not supported!');
                 return 1;
@@ -89,9 +90,28 @@ class TaskCollectorCommand extends BaseCommand
             foreach ($provider->getTasks() as $taskResource) {
                 $this->saveEntity($taskResource);
             }
+            $this->success('Completed!');
+            return 0;
         }
 
-        return 0;
+        if($input->getOption('all') !== false) {
+            $this->info('Data collecting all providers');
+            foreach (self::SUPPORTED_PROVIDERS as $supportedProvider) {
+                /**
+                 * @var $provider TaskServiceInterface
+                 */
+                $provider = new $supportedProvider['service']($supportedProvider['defaultUri']);
+
+                foreach ($provider->getTasks() as $taskResource) {
+                    $this->saveEntity($taskResource);
+                }
+            }
+            $this->success('Completed!');
+            return 0;
+        }
+
+        $this->error('You need to provide one option that --all or --provider=mock1 or mock2');
+        return 1;
     }
 
     /**

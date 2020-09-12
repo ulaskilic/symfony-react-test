@@ -13,6 +13,7 @@ abstract class BaseResource
      */
     protected function fill($raw = []): void
     {
+        // TODO find a way to fill sub-resources [falling exception if sub resource not initiated]
         foreach ($raw as $key => $value) {
             if(property_exists($this, $key)) {
                 $this->{$key} = $value;
