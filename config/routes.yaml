@@ -1,6 +1,6 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
-app_task:
-  path: /task
-  controller: App\Controller\TaskController::index
+#app_task:
+#  path: /tasks
+#  controller: App\Controller\TaskController::index

@@ -1,0 +1,38 @@
+{
+    "devDependencies": {
+        "@babel/preset-react": "^7.10.4",
+        "@symfony/webpack-encore": "^0.30.0",
+        "apisauce": "^1.1.2",
+        "core-js": "^3.0.0",
+        "lodash": "^4.17.20",
+        "moment": "^2.27.0",
+        "node-sass": "^4.14.1",
+        "prop-types": "^15.7.2",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "react-moment": "^0.9.7",
+        "regenerator-runtime": "^0.13.2",
+        "sass-loader": "8.0.0",
+        "webpack-notifier": "^1.6.0"
+    },
+    "license": "UNLICENSED",
+    "private": true,
+    "scripts": {
+        "dev-server": "encore dev-server",
+        "dev": "encore dev",
+        "watch": "encore dev --watch",
+        "build": "encore production --progress"
+    },
+    "dependencies": {
+        "@babel/plugin-proposal-class-properties": "^7.10.4",
+        "@babel/plugin-transform-runtime": "^7.11.5",
+        "@material-ui/core": "^4.11.0",
+        "interactjs": "^1.9.22",
+        "material-table": "^1.69.0",
+        "react-calendar-timeline": "^0.27.0",
+        "react-router-dom": "^5.2.0",
+        "react-visjs-timeline": "^1.6.0",
+        "vis": "^4.21.0-EOL",
+        "vis-timeline": "^7.3.9"
+    }
+}
