@@ -17,7 +17,7 @@ const Home = props => {
     const [tasks, setTasks] = React.useState([]);
     const [groups, setGroups] = React.useState([]);
     const [events, setEvents] = React.useState([]);
-    const [totalDays, setTotalDays] = React.useState(0);
+    const [devs, setDevs] = React.useState([]);
     const columns = [
         {title: 'ID', field: 'id'},
         {title: 'Task identifier', field: 'identifier'},
@@ -42,7 +42,6 @@ const Home = props => {
     const getDistributedList = async () => {
         props.setLoading(true);
         const {data, ok} = await ApiService.task.distribute();
-        console.log(data, ok);
         if (ok) {
             const groups = _.map(data.devs, (dev) => {
                 return {
@@ -50,7 +49,6 @@ const Home = props => {
                     content: dev.name
                 };
             });
-            console.log(groups)
             setGroups(groups)
 
             const events = _.map(data.tasks, (event, i) => {
@@ -65,10 +63,9 @@ const Home = props => {
                     data: event
                 };
             })
-            console.log(events);
             setEvents(events)
         }
-        setTotalDays(data.totalDays)
+        setDevs(data.devs)
         props.setLoading(false);
     }
 
@@ -89,8 +86,8 @@ const Home = props => {
     return (
         <Grid container spacing={2} component={Paper}>
             <Grid item xs={12}>
-                <Button variant="contained" color={"primary"} onClick={getDistributedList}>Distrube tasks</Button>
-                <Typography>Total days: {totalDays}</Typography>
+                <Button variant="contained" color={"primary"} onClick={getDistributedList}>Distribute tasks</Button>
+                {devs.map(dev => (<Typography><b>{dev.name}</b> - Total days: {dev.totalDay}</Typography>))}
             </Grid>
             <Grid item xs={12}>
                 <Timeline

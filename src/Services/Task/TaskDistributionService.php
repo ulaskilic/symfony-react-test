@@ -102,18 +102,16 @@ class TaskDistributionService
         }
 
         $events = [];
-        $maxDay = 0;
+        $devs = [];
         foreach ($devBucket as $key => $bucket) {
             $events = array_merge($events, $bucket['tasks']);
-            if($bucket['totalDay'] > $maxDay) {
-                $maxDay = $bucket['totalDay'];
-            }
+            unset($bucket['tasks']);
+            $devs[] = $bucket;
         }
 
         return [
-            'devs' => DeveloperMock::list(),
+            'devs' => $devs,
             'tasks' => $events,
-            'totalDays' => $maxDay
         ];
     }
 
