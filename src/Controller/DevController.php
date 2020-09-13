@@ -20,17 +20,24 @@ class DevController extends AbstractController
     }
 
     /**
-     * @Route("/api/debug", name="dev-list")
+     * @Route("/api/approach1", name="approach1")
      * @param TaskDistributionService $distService
      *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function debug(TaskDistributionService $distService)
+    public function approach1(TaskDistributionService $distService)
     {
-        $today = Carbon::now()->startOfDay();
+        return $this->json($distService->approach1());
+    }
 
-
-
-        return $this->json($distService->distributeTasks());
+    /**
+     * @Route("/api/approach2", name="approach2")
+     * @param TaskDistributionService $distService
+     *
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function approach2(TaskDistributionService $distService)
+    {
+        return $this->json($distService->approach2());
     }
 }

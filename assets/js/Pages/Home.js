@@ -39,9 +39,16 @@ const Home = props => {
         props.setLoading(false);
     }
 
-    const getDistributedList = async () => {
+    const getDistributedList = async (approach) => {
         props.setLoading(true);
-        const {data, ok} = await ApiService.task.distribute();
+        let response;
+        if (approach === 1) {
+            response = await ApiService.task.distribute();
+        } else {
+            response = await ApiService.task.distribute2();
+        }
+        const {data, ok} = response;
+
         if (ok) {
             const groups = _.map(data.devs, (dev) => {
                 return {
@@ -56,7 +63,7 @@ const Home = props => {
                     start: moment(event.start).subtract(3, "hours"),
                     end: moment(event.end).subtract(3, "hours"),
                     content: `${event.task} - ${event.complexity}`,
-                    id: `${event.task}-${i}`,
+                    id: `${event.task}-${i}-${moment(event.start).toISOString()}`,
                     group: event.dev,
                     type: 'background',
                     style: `background-color: ${str2Hex(event.task + moment(event.start).toISOString())}; color: white`,
@@ -86,7 +93,12 @@ const Home = props => {
     return (
         <Grid container spacing={2} component={Paper}>
             <Grid item xs={12}>
-                <Button variant="contained" color={"primary"} onClick={getDistributedList}>Distribute tasks</Button>
+                <Button variant="contained" color={"primary"} onClick={() => {
+                    getDistributedList(1)
+                }}>Distribute tasks Approach 1</Button>
+                <Button variant="contained" color={"primary"} onClick={() => {
+                    getDistributedList(2)
+                }}>Distribute tasks Approach 2</Button>
                 {devs.map(dev => (<Typography><b>{dev.name}</b> - Total days: {dev.totalDay}</Typography>))}
             </Grid>
             <Grid item xs={12}>

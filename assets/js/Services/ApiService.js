@@ -8,7 +8,10 @@ export default {
             return api.get('/api/task');
         },
         distribute: async () => {
-            return api.get('/api/debug');
-        }
+            return api.get('/api/approach1');
+        },
+        distribute2: async () => {
+            return api.get('/api/approach2');
+        },
     }
 }

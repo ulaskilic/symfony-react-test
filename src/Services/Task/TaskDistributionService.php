@@ -17,7 +17,14 @@ class TaskDistributionService
      */
     private TaskRepository $repository;
 
-    public function distributeTasks($providers = []): array
+    /**
+     * Distribute task if task complexity match with developer level
+     *
+     * @param array $providers
+     *
+     * @return array
+     */
+    public function approach1($providers = []): array
     {
         $tasks = [];
         if (!empty($providers)) {
@@ -34,8 +41,6 @@ class TaskDistributionService
         // clean heap
         $tasks = [];
 
-        // Keep daily buckets
-        $completedBuckets = [];
         $currentDate = Carbon::now()->startOfDay();
 
         $devList = DeveloperMock::list();
@@ -93,7 +98,6 @@ class TaskDistributionService
                 $appropriateDev['current'] = $this->nextWorkDay($appropriateDev['current'])
                     ->setHour(8)->setMinute(0)->setSecond(0);
                 $appropriateDev['remainingHours'] = $appropriateDev['dailyWorkHours'];
-                $appropriateDev['remainingHours'] = $appropriateDev['dailyWorkHours'];
                 $appropriateDev['totalDay']++;
                 $queue->unshift($currentTask);
             }
@@ -115,6 +119,102 @@ class TaskDistributionService
         ];
     }
 
+    public function approach2()
+    {
+        $tasks = [];
+        if (!empty($providers)) {
+            $tasks = $this->repository->findBy(['provider' => $providers]);
+        } else {
+            $tasks = $this->repository->findAll();
+        }
+
+
+        $queue = new \SplQueue();
+        foreach ($tasks as $task) {
+            // Keep estimation multipled with complexity
+            $task->setEstimation($task->getEstimation() * $task->getComplexity());
+            $queue->push($task);
+        }
+        // clean heap
+        $tasks = [];
+
+        // Keep daily buckets
+        $completedBuckets = [];
+        $currentDate = Carbon::now()->startOfDay();
+
+        $devList = DeveloperMock::list();
+
+        $devBucket = [];
+
+        foreach ($devList as $dev) {
+            $devBucket[$dev['workLevel']] = array_merge($dev, [
+                'current' => $currentDate->clone()->setHour(8)->setMinute(0)->setSecond(0),
+                'remainingHours' => $dev['dailyWorkHours'] * $dev['workLevel'],
+                'tasks' => [],
+                'totalDay' => 1
+            ]);
+        }
+
+        while (!$queue->isEmpty()) {
+            /**
+             * @var $currentTask Task
+             */
+            $currentTask = $queue->shift();
+
+            foreach ($devBucket as $workLevel => $appropriateDev) {
+
+                if($appropriateDev['remainingHours'] !== 0) {
+                    if($currentTask->getEstimation() > $appropriateDev['remainingHours']) {
+                        $appropriateDev['tasks'][] = [
+                            'task' => $currentTask->getIdentifier(),
+                            'start' => $appropriateDev['current']->toISOString(),
+                            'complexity' => $currentTask->getComplexity(),
+                            'end' => $appropriateDev['current']->addSeconds($appropriateDev['remainingHours'] / $workLevel * 60 * 60)->toISOString(),
+                            'dev' => $appropriateDev['name']
+                        ];
+                        $currentTask->setEstimation($currentTask->getEstimation() - $appropriateDev['remainingHours']);
+                        $appropriateDev['remainingHours'] = 0;
+                    } else {
+                        $appropriateDev['tasks'][] = [
+                            'task' => $currentTask->getIdentifier(),
+                            'start' => $appropriateDev['current']->toISOString(),
+                            'complexity' => $currentTask->getComplexity(),
+                            'end' => $appropriateDev['current']->addSeconds($currentTask->getEstimation() / $workLevel * 60 * 60)->toISOString(),
+                            'dev' => $appropriateDev['name']
+                        ];
+                        $appropriateDev['remainingHours'] = $appropriateDev['remainingHours'] - $currentTask->getEstimation();
+                        $currentTask->setEstimation(0);
+                    }
+                }
+                $devBucket[$workLevel] = $appropriateDev;
+            }
+
+
+            if($currentTask->getEstimation() !== 0) {
+                foreach ($devBucket as $workLevel => $appropriateDev) {
+                    $appropriateDev['current'] = $this->nextWorkDay($appropriateDev['current'])
+                        ->setHour(8)->setMinute(0)->setSecond(0);
+                    $appropriateDev['remainingHours'] = $appropriateDev['dailyWorkHours'] * $appropriateDev['workLevel'];
+                    $appropriateDev['totalDay']++;
+                    $devBucket[$workLevel] = $appropriateDev;
+                }
+                $queue->unshift($currentTask);
+            }
+        }
+
+        $events = [];
+        $devs = [];
+        foreach ($devBucket as $key => $bucket) {
+            $events = array_merge($events, $bucket['tasks']);
+            unset($bucket['tasks']);
+            $devs[] = $bucket;
+        }
+
+        return [
+            'devs' => $devs,
+            'tasks' => $events,
+        ];
+    }
 
     private function nextWorkDay(CarbonInterface $currentDay): CarbonInterface
     {
